@@ -8,7 +8,7 @@ It uses the RAK devices AT commands to join the network and send the data
 
 ## How do I use this?
 
-1. Create an account on The Things Network / The Things Stack Community Edition and register your device) and create an application
+1. Create an account on The Things Network / The Things Stack Community Edition and register your device and create an application
 1. Use Thonny to edit the `simple_example.py` with the keys from your device and The Things Network (TTN)
 1. Ensure that you use the right region (I'm in Europe, so I use `EU868`, in the USA you would use: `US915`, in India: `IN865` etc)
 1. Connect the Pico and the RAK 4200 device. Ensuring that:
