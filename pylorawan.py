@@ -7,19 +7,24 @@ REPEAT_SLEEP = 6
 
 class Utils():
 
-    def __init__(self, debug=False):
+    def __init__(self, debug=False, uart_debug=None):
         self.debug=debug
+        self.uart_debug = uart_debug
 
     def log_debug(self, msg=""):
         if self.debug:
-            print(f"{time.time()} : {msg}")
+            output = f"{time.time()} : {msg}"
+            print(output)
+            if self.uart_debug is not None:
+                self.uart_debug.write(output + "\r\n")
 
 
 class LorawanModem(Utils):
 
-    def __init__(self, uart, debug=False):
+    def __init__(self, uart, debug=False, uart_debug=None):
         self.uart = uart
         self.debug = debug
+        self.uart_debug = uart_debug
 
 
     def send(self, command, rx_delay):
@@ -45,13 +50,13 @@ class LorawanModem(Utils):
     def read(self):
         rx_data = bytes()
         while self.uart.any()>0:
-            new_data = self.uart.read(1)
+            new_data = self.uart.read()
             if new_data is not None:
                 rx_data += new_data
         try:
             rx_data.decode('utf-8')
         except UnicodeError:
-            self.log_debug(f"UnicodeError with rx_data:{rx_data}")
+            self.log_debug(f"UnicodeError with rx_data:\n{rx_data}")
             return f"UnicodeError in decode('utf-8'), The response was: {rx_data}"
 
         return rx_data.decode('utf-8')
@@ -86,12 +91,16 @@ class LorawanModem(Utils):
         if None in [region, dev_eui, app_eui, app_key]:
             raise ValueError(f"Missing essential config, Region: {region}, Dev EUI: {dev_eui}, App EUI: {app_eui}, App Key: {app_key}")
 
-        self.run_command(command=f"at+set_config=lora:join_mode:0", wanted_response="OK", tries=1, rx_delay=0.1),
-        self.run_command(command=f"at+set_config=lora:class:{lora_class}", wanted_response="OK", tries=1, rx_delay=0.1),
-        self.run_command(command=f"at+set_config=lora:region:{region}", wanted_response= "OK", tries=1, rx_delay=0.1),
-        self.run_command(command=f"at+set_config=lora:dev_eui:{dev_eui}", wanted_response="OK", tries=1, rx_delay=0.1),
-        self.run_command(command=f"at+set_config=lora:app_eui:{app_eui}", wanted_response="OK", tries=1, rx_delay=0.1),
-        self.run_command(command=f"at+set_config=lora:app_key:{app_key}", wanted_response="OK",tries=1, rx_delay=0.1)
+        self.run_command(command=f"at+set_config=lora:join_mode:0", wanted_response="OK", tries=1, rx_delay=0),
+        self.run_command(command=f"at+set_config=lora:class:{lora_class}", wanted_response="OK", tries=1, rx_delay=0),
+        self.run_command(command=f"at+set_config=lora:region:{region}", wanted_response= "OK", tries=1, rx_delay=0),
+        self.run_command(command=f"at+set_config=lora:dev_eui:{dev_eui}", wanted_response="OK", tries=1, rx_delay=0),
+        self.run_command(command=f"at+set_config=lora:app_eui:{app_eui}", wanted_response="OK", tries=1, rx_delay=0),
+        self.run_command(command=f"at+set_config=lora:app_key:{app_key}", wanted_response="OK",tries=1, rx_delay=0)
+
+    # Set the data rate, this relates to Spreading Factor (SF)
+    def set_data_rate(self, data_rate=5):
+        return self.run_command(command=f"at+set_config=lora:dr:{data_rate}", wanted_response='OK', tries=1, rx_delay=0)
 
     # Join the Lorawan network 
     def join(self):
@@ -100,5 +109,8 @@ class LorawanModem(Utils):
 
     # Send the data, I've been sending pairs of hex values, passed in as strings, a pair of Hex chars is 1 byte (8 bits)
     def send_data(self, data="", channel=1, tries=1):
-        return self.run_command(command=f"at+send=lora:{channel}:{data}", wanted_response="OK", tries=tries),
+        return self.run_command(command=f"at+send=lora:{channel}:{data}", wanted_response="OK", tries=tries)
 
+    # Return status information from the device
+    def status_info(self):
+        return self.run_command(command='at+get_config=lora:status', wanted_response='DownLinkCounter', tries=1, rx_delay=0)
