@@ -8,5 +8,12 @@
 # Done, the file will then be imported into the other scripts at run time.
 
 dev_eui="XXXXXXXXXXXXXX"
+# or
+dev_eui_rak4200="XXXXXXXXXXXXXX"
+# or
+dev_eui_rak3172="XXXXXXXXXXXXXX"
+#
+# Depending on which script you use etc.
+
 app_eui="YYYYYYYYYYYYYY"
 app_key="ZZZZZZZZZZZZZZ"
