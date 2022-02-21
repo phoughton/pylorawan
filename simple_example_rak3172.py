@@ -6,21 +6,17 @@ import creds_config
 # Tested with a Raspberry PI Pico and a RAK4200(H) Evaluation Board (868MHz)
 
 # Talk to the modem using the UART0 TRansmitter(Tx) / Receiver(Rx)
-uart = UART(1, 115200)  # use RPI PICO
+uart = UART(1, 9600)  # use RPI PICO
 
 # The device uses AT commands like a traditional modem, so i'll refer to it as a modem.
 #
-# If you have a RAK4200 device use this:
-# modem = pylorawan.LorawanModem(uart, "RAK4200", debug=True)
-#
-# If yuou have a RAK3172, use this:
 modem = pylorawan.LorawanModem(uart, "RAK3172", debug=True)
 
 # Configure it to use OTAA (rather ABP comms) using keys from the device itself and The Things Network Console
 # dev_eui is printed in the top of the chip casing
 #
 modem.configure_otaa(region="EU868",
-                     dev_eui=creds_config.dev_eui,
+                     dev_eui=creds_config.dev_eui_rak3172,
                      app_eui=creds_config.app_eui,
                      app_key=creds_config.app_key,
                      lora_class="A")

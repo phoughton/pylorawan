@@ -10,20 +10,16 @@ uart = UART(1, 115200)  # use RPI PICO
 
 # The device uses AT commands like a traditional modem, so i'll refer to it as a modem.
 #
-# If you have a RAK4200 device use this:
-# modem = pylorawan.LorawanModem(uart, "RAK4200", debug=True)
-#
-# If yuou have a RAK3172, use this:
-modem = pylorawan.LorawanModem(uart, "RAK3172", debug=True)
+modem = pylorawan.LorawanModem(uart, "RAK4200", debug=True)
 
 # Configure it to use OTAA (rather ABP comms) using keys from the device itself and The Things Network Console
 # dev_eui is printed in the top of the chip casing
 #
 modem.configure_otaa(region="EU868",
-                     dev_eui=creds_config.dev_eui,
+                     dev_eui=creds_config.dev_eui_rak4200,
                      app_eui=creds_config.app_eui,
                      app_key=creds_config.app_key,
-                     lora_class="A")
+                     lora_class="0")
 
 # Try and join the network (often takes a few tries, it will automatically retry a few times)
 if modem.join():

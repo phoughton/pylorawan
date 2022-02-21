@@ -20,13 +20,39 @@ class Utils():
 
 
 class LorawanModem(Utils):
-
-    def __init__(self, uart, debug=False, uart_debug=None):
+    
+    RAK3172_region_lookup = {
+        "EU433" : "0",
+        "CN470" : "1",
+        "IN865" : "3",
+        "EU868" : "4",
+        "US915" : "5",
+        "AU915" : "6",
+        "KR920" : "7",
+        "AS923-1" : "8",
+        "AS923-1" : "8-1",
+        "AS923-2" : "8-2",
+        "AS923-3" : "8-3",
+        "S923-4" : "8-4",
+        }
+    
+    RAK4200_region_list = [
+        "EU433", "CN470", "IN865", "EU868", "US915", "AU915", "KR920", "AS923"
+        ]
+    
+    # Provide:
+    # a UART to communicate to the RAK device
+    # The device type e.g. "RAK4200", "RAK3172"
+    def __init__(self, uart, device_type, debug=False, uart_debug=None):
         self.uart = uart
+        if device_type not in [None, "RAK4200", "RAK3172"]:
+            raise ValueError("Device type has not been set correctly. Supported types: RAK4200 & RAK3172")
+        
+        self.device = device_type
         self.debug = debug
         self.uart_debug = uart_debug
 
-
+    # Send the AT command to the RAK device and wait for the ewxpected delay time
     def send(self, command, rx_delay):
         self.log_debug(command)
         self.uart.write(command + "\r\n")
@@ -46,7 +72,7 @@ class LorawanModem(Utils):
         self.log_debug(f"Text found: {read_text}, Found?: {found}")
         return found, read_text
 
-
+    # Read data from the RAK device over UART, try and decode to UTF-8 text
     def read(self):
         rx_data = bytes()
         while self.uart.any()>0:
@@ -85,32 +111,79 @@ class LorawanModem(Utils):
 
         return found, resp_text
 
-    # Set the device up for Over The Air Activation (OTAA) with these keys etc.
-    def configure_otaa(self, region=None, dev_eui=None, app_eui=None, app_key=None, lora_class=0):
-        self.log_debug("Configure Modem:")
-        if None in [region, dev_eui, app_eui, app_key]:
-            raise ValueError(f"Missing essential config, Region: {region}, Dev EUI: {dev_eui}, App EUI: {app_eui}, App Key: {app_key}")
+    def region_translate(self, region):
+        if self.device=="RAK4200":
+            if isinstance(region, int):
+                raise ValueError("Region was not a String, E.g. EU868")
+            return region
+        elif self.device=="RAK3172":
+            return self.RAK3172_region_lookup[f"{region}"]
 
-        self.run_command(command=f"at+set_config=lora:join_mode:0", wanted_response="OK", tries=1, rx_delay=0),
-        self.run_command(command=f"at+set_config=lora:class:{lora_class}", wanted_response="OK", tries=1, rx_delay=0),
-        self.run_command(command=f"at+set_config=lora:region:{region}", wanted_response= "OK", tries=1, rx_delay=0),
-        self.run_command(command=f"at+set_config=lora:dev_eui:{dev_eui}", wanted_response="OK", tries=1, rx_delay=0),
-        self.run_command(command=f"at+set_config=lora:app_eui:{app_eui}", wanted_response="OK", tries=1, rx_delay=0),
-        self.run_command(command=f"at+set_config=lora:app_key:{app_key}", wanted_response="OK",tries=1, rx_delay=0)
+    # Set the device up for Over The Air Activation (OTAA) with these keys etc.
+    def configure_otaa(self, region=None, dev_eui=None, app_eui=None, app_key=None, lora_class=None):
+        
+        region = self.region_translate(region)
+        
+        self.log_debug("Configure Modem:")
+        if None in [region, dev_eui, app_eui, app_key, lora_class]:
+            raise ValueError(f"Missing essential config, Region: {region}, Dev EUI: {dev_eui}, App EUI: {app_eui}, App Key: {app_key}, Lora Class: {lora_class}")
+
+        if self.device == "RAK4200":
+            self.run_command(command=f"at+set_config=lora:join_mode:0", wanted_response="OK", tries=1, rx_delay=0)
+            self.run_command(command=f"at+set_config=lora:class:{lora_class}", wanted_response="OK", tries=1, rx_delay=0)
+            self.run_command(command=f"at+set_config=lora:region:{region}", wanted_response= "OK", tries=1, rx_delay=0)
+            self.run_command(command=f"at+set_config=lora:dev_eui:{dev_eui}", wanted_response="OK", tries=1, rx_delay=0)
+            self.run_command(command=f"at+set_config=lora:app_eui:{app_eui}", wanted_response="OK", tries=1, rx_delay=0)
+            self.run_command(command=f"at+set_config=lora:app_key:{app_key}", wanted_response="OK",tries=1, rx_delay=0)
+        elif self.device == "RAK3172":
+            self.run_command(command=f"AT+NWM=1", wanted_response="OK", tries=1, rx_delay=0)
+            self.run_command(command=f"AT+NJM=1", wanted_response="OK", tries=1, rx_delay=0)
+            self.run_command(command=f"AT+CLASS={lora_class}", wanted_response="OK", tries=1, rx_delay=0)
+            self.run_command(command=f"AT+BAND={region}", wanted_response="OK", tries=1, rx_delay=0)
+        else:
+            raise ValueError("Device type not supported")
+        
 
     # Set the data rate, this relates to Spreading Factor (SF)
-    def set_data_rate(self, data_rate=5):
-        return self.run_command(command=f"at+set_config=lora:dr:{data_rate}", wanted_response='OK', tries=1, rx_delay=0)
+    def data_rate(self, data_rate=5):
+        if self.device=="RAK4200":
+            return self.run_command(command=f"at+set_config=lora:dr:{data_rate}", wanted_response='OK', tries=1, rx_delay=0)
+        elif self.device=="RAK3172":
+            return self.run_command(command=f"AT+DR={data_rate}", wanted_response='OK', tries=1, rx_delay=0)
 
     # Join the Lorawan network 
     def join(self):
         self.log_debug("Join Network:")
-        return self.run_command(command='at+join', wanted_response='OK Join Success', tries=8)
+        if self.device=="RAK4200":
+            found, resp = self.run_command(command='at+join', wanted_response='OK Join Success', tries=8)
+        elif self.device=="RAK3172":
+            found, resp =  self.run_command(command='AT+JOIN=1:0:10:0', wanted_response='+EVT:JOINED', tries=8)
+        return found
 
     # Send the data, I've been sending pairs of hex values, passed in as strings, a pair of Hex chars is 1 byte (8 bits)
-    def send_data(self, data="", channel=1, tries=1):
-        return self.run_command(command=f"at+send=lora:{channel}:{data}", wanted_response="OK", tries=tries)
+    def send_data(self, data="", port=1, tries=1):
+        if self.device=="RAK4200":
+            return self.run_command(command=f"at+send=lora:{port}:{data}", wanted_response="OK", tries=tries)
+        elif self.device=="RAK3172":
+            return self.run_command(command=f"AT+SEND={port}:{data}", wanted_response="OK", tries=tries)
 
-    # Return status information from the device
+    # Return status information from the device (RAK4200 only)
     def status_info(self):
-        return self.run_command(command='at+get_config=lora:status', wanted_response='DownLinkCounter', tries=1, rx_delay=0)
+        if self.device=="RAK4200":
+            return self.run_command(command='at+get_config=lora:status', wanted_response='DownLinkCounter', tries=1, rx_delay=0)
+        elif self.device=="RAK3172":
+            self.log_debug("Status command not supported on RAK3172")
+    
+    # Get supported regions for current device or which device_type is supplied
+    def get_supported_regions(self, device_type=None):
+        if device_type is None:
+            device_type = self.device
+        
+        if device_type == "RAK4200":
+            return self.RAK4200_region_list
+        
+        if device_type == "RAK3172":
+            return list(self.RAK3172_region_lookup.keys())
+    
+        
+            

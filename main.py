@@ -34,10 +34,10 @@ def get_temp_celcius():
 
 # Set up the modem and output the status
 # Credentials are stored in seperate file: credsconfig
-modem = pylorawan.LorawanModem(uart, debug=True, uart_debug=uart_debug)
+modem = pylorawan.LorawanModem(uart, "RAK3172", debug=True, uart_debug=uart_debug)
 logger = pylorawan.Utils(debug=True, uart_debug=uart_debug)
 modem.configure_otaa(region="EU868", dev_eui=creds_config.dev_eui, app_eui=creds_config.app_eui, app_key=creds_config.app_key)
-modem.set_data_rate(3)
+modem.data_rate(3)
 logger.log_debug(modem.status_info())
 logger.log_debug()
 
