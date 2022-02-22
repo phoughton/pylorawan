@@ -18,7 +18,7 @@ It uses the RAK devices AT commands to join the network and send the data
     - The Pico UART *Tx* connects to the UART *Rx* on the RAK device 
     - The Pico UART *Rx* connects to the UART *Tx* on the RAK device 
 1. Upload the files, `pylorawan.py`, `creds_config.py` and `simple_example_<YOUR_DEVICE>.py` to the Pico using Thonny
-1. Open `simple_example.py` in Thonny and hit play. If debug is set to True, you should get debug like this:
+1. Open `simple_example_<YOUR_DEVICE>.py` in Thonny and hit play. If debug is set to True, you should get debug like this:
 ![Thonny Pylorawan Debug of OTAA Join](screenshot_thonny_debug_join.png "Thonny Pylorawan Debug of OTAA Join")
 
 And when connected, hopefully a few seconds later, in the TTN console you should see this:
