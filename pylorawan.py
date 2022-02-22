@@ -41,9 +41,9 @@ class LorawanModem(Utils):
         ]
     
     RAK4200_lora_class_lookup = {
-        "0": "A",
-        "1": "B",
-        "2": "C"
+        "A": "0",
+        "B": "1",
+        "C": "2"
         }
     
     RAK3172_lora_class_list = [
