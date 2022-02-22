@@ -40,6 +40,16 @@ class LorawanModem(Utils):
         "EU433", "CN470", "IN865", "EU868", "US915", "AU915", "KR920", "AS923"
         ]
     
+    RAK4200_lora_class_lookup = {
+        "0": "A",
+        "1": "B",
+        "2": "C"
+        }
+    
+    RAK3172_lora_class_list = [
+        "A", "B", "C"
+        ]
+    
     # Provide:
     # a UART to communicate to the RAK device
     # The device type e.g. "RAK4200", "RAK3172"
@@ -119,10 +129,25 @@ class LorawanModem(Utils):
         elif self.device=="RAK3172":
             return self.RAK3172_region_lookup[f"{region}"]
 
+    def class_translate(self, lora_class):
+        if isinstance(lora_class, int):
+            raise ValueError("Lora Class should be string 'A', 'B' or 'C'")
+            
+        if self.device=="RAK4200":
+            if lora_class == "1":
+                raise ValueError("Lora Class 1 / B is not supported on this device")
+            return self.RAK4200_lora_class_lookup[lora_class]
+        
+        elif self.device=="RAK3172":
+            if lora_class not in self.RAK3172_lora_class_list:
+                raise ValueError("Lora Class not found")
+            return lora_class
+
     # Set the device up for Over The Air Activation (OTAA) with these keys etc.
     def configure_otaa(self, region=None, dev_eui=None, app_eui=None, app_key=None, lora_class=None):
         
         region = self.region_translate(region)
+        lora_class = self.class_translate(lora_class)
         
         self.log_debug("Configure Modem:")
         if None in [region, dev_eui, app_eui, app_key, lora_class]:

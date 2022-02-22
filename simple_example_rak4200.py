@@ -19,7 +19,7 @@ modem.configure_otaa(region="EU868",
                      dev_eui=creds_config.dev_eui_rak4200,
                      app_eui=creds_config.app_eui,
                      app_key=creds_config.app_key,
-                     lora_class="0")
+                     lora_class="A")
 
 # Try and join the network (often takes a few tries, it will automatically retry a few times)
 if modem.join():

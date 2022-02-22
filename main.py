@@ -15,7 +15,7 @@ uart_debug = UART(0, 115200)  # use UART 0 for debug (Optional)
 # Flash LED to indicate its running
 print("Flash LED")
 led.value(1)
-time.sleep(1)
+time.sleep(5)
 led.value(0)
 
 thermistor = ADC(28)
@@ -49,7 +49,7 @@ if modem.join():
     while True:
         encoded_temp = hex_int_from_2dp_celcius(get_temp_celcius())
         logger.log_debug(f"Sending Temperature:{encoded_temp}")
-        modem.send_data(f"{location}{encoded_temp}", channel=2)
+        modem.send_data(f"{location}{encoded_temp}", port=2)
         logger.log_debug(time.time())
         logger.log_debug("Sleeping...")
         for count in range(3):
