@@ -160,11 +160,16 @@ class LorawanModem(Utils):
             self.run_command(command=f"at+set_config=lora:dev_eui:{dev_eui}", wanted_response="OK", tries=1, rx_delay=0)
             self.run_command(command=f"at+set_config=lora:app_eui:{app_eui}", wanted_response="OK", tries=1, rx_delay=0)
             self.run_command(command=f"at+set_config=lora:app_key:{app_key}", wanted_response="OK",tries=1, rx_delay=0)
+            
         elif self.device == "RAK3172":
             self.run_command(command=f"AT+NWM=1", wanted_response="OK", tries=1, rx_delay=0)
             self.run_command(command=f"AT+NJM=1", wanted_response="OK", tries=1, rx_delay=0)
             self.run_command(command=f"AT+CLASS={lora_class}", wanted_response="OK", tries=1, rx_delay=0)
             self.run_command(command=f"AT+BAND={region}", wanted_response="OK", tries=1, rx_delay=0)
+            self.run_command(command=f"AT+DEVEUI={dev_eui}", wanted_response="OK", tries=1, rx_delay=0)
+            self.run_command(command=f"AT+APPEUI={app_eui}", wanted_response="OK", tries=1, rx_delay=0)
+            self.run_command(command=f"AT+APPKEY={app_key}", wanted_response="OK", tries=1, rx_delay=0)
+
         else:
             raise ValueError("Device type not supported")
         
