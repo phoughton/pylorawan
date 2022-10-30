@@ -6,7 +6,7 @@ Originally tested on a Raspberry PI Pico with a RAK4200(H) Evaluation Board (868
 
 It now also supports the RAK3172 device.
 
-It uses the RAK devices AT commands to join the network and send the data
+It uses the RAK devices' built-in [AT command](https://en.wikipedia.org/wiki/Hayes_command_set) support to join The Things Network and send data.
 
 ## How do I use this?
 
